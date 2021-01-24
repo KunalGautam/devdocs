@@ -1,4 +1,4 @@
-name: BuildImage
+name: arm64BuildImage
 
 on:
   push:
