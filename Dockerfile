@@ -1,25 +1,20 @@
-FROM ruby:2.6.5
+FROM ruby:2.6.5-alpine
 
 ENV LANG=C.UTF-8
 ENV ENABLE_SERVICE_WORKER=true
 
 WORKDIR /devdocs
 
-RUN apt-get update && \
-    apt-get -y install git nodejs libcurl4 && \
-    gem install bundler && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY Gemfile Gemfile.lock Rakefile /devdocs/
-
-RUN bundle install --system && \
-    rm -rf ~/.gem /root/.bundle/cache /usr/local/bundle/cache
-
 COPY . /devdocs
 
-RUN thor docs:download --all && \
+RUN apk --update add nodejs build-base libstdc++ gzip git zlib-dev libcurl && \
+    gem install bundler && \
+    bundle install --system --without test && \
+    thor docs:download --all && \
     thor assets:compile && \
-    rm -rf /tmp
+    apk del gzip build-base git zlib-dev && \
+    rm -rf /var/cache/apk/* /tmp ~/.gem /root/.bundle/cache \
+    /usr/local/bundle/cache /usr/lib/node_modules
 
 EXPOSE 9292
 CMD rackup -o 0.0.0.0
